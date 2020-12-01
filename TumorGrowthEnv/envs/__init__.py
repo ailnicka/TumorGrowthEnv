@@ -1,1 +1,1 @@
-from gym_foo.envs.foo_env import FooEnv
+from TumorGrowthEnv.envs.tumor_growth_env import TumorGrowthEnv
