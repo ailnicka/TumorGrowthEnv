@@ -27,7 +27,7 @@ class TumorGrowthEnv(gym.Env):
         self.reward = - np.mean(self.cumulative_dose)
         self.time = 0
         self.cumulative_dose = 0
-        self.observation_space = spaces.MultiDiscrete([1000000]*parallel_runs)
+        self.observation_space = spaces.MultiDiscrete([1000000]*parallel_runs)  # lots of cells allowed per tumor?
         self.action_space = spaces.Dict({"delay": spaces.Discrete(12),
                                          "dose": spaces.Box(low=0, high=5, shape=(), dtype=np.float32)})
 
