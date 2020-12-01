@@ -30,7 +30,7 @@ class TumorGrowthEnv(gym.Env):
                                     1) # num protocols
         self.experiment.run(0)
         self.tumor_cells = self.experiment.get_results()
-        self.reward = - np.mean(self.cumulative_dose)
+        self.reward = - np.mean(self.tumor_cells)
         self.time = 0
         self.cumulative_dose = 0
         self.observation_space = spaces.MultiDiscrete([1000000]*parallel_runs)  # lots of cells allowed per tumor?
