@@ -28,6 +28,7 @@ class TumorGrowthEnv(gym.Env):
                                     tumors,
                                     parallel_runs,  # num_tests
                                     1) # num protocols
+        self.experiment.run(0)
         self.tumor_cells = self.experiment.get_results()
         self.reward = - np.mean(self.cumulative_dose)
         self.time = 0
