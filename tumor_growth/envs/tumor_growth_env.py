@@ -2,7 +2,7 @@ import emt6ro.simulation as sim
 import numpy as np
 import gym
 from gym import spaces
-from os import path
+import os
 
 
 class TumorGrowthEnv(gym.Env):
@@ -19,10 +19,10 @@ class TumorGrowthEnv(gym.Env):
                  tumors_list=None,
                  parallel_runs: int = 10):
         if params_filename is None:
-            params_filename = path.join(path.dirname(path.abspath(__file__)), "/data/default-parameters.json")
+            params_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "/data/default-parameters.json")
             print(params_filename)
         if tumors_list is None:
-            tumors_list = [path.join(path.dirname(path.abspath(__file__)), "/data/tumor-lib/tumor-{}.txt".format(i))
+            tumors_list = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "/data/tumor-lib/tumor-{}.txt".format(i))
                            for i in range(1, 11)]
         params = sim.load_parameters(params_filename)
         tumors = [sim.load_state(tumors, params) for tumors in tumors_list]
