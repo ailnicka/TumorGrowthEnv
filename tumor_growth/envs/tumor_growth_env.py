@@ -29,11 +29,14 @@ class TumorGrowthEnv(gym.Env):
                                     tumors,
                                     parallel_runs,  # num_tests
                                     1) # num protocols
+        # trick to get starting situation..
         self.experiment.run(0)
+        # values at the beginning
         self.tumor_cells = self.experiment.get_results()
         self.reward = - np.mean(self.tumor_cells)
         self.time = 0
         self.cumulative_dose = 0
+        # gym spaces
         self.observation_space = spaces.MultiDiscrete([1000000]*parallel_runs)  # lots of cells allowed per tumor?
         self.action_space = spaces.Dict({"delay": spaces.Discrete(12),  # irradiation possible on full hours
                                          "dose": spaces.Discrete(11)})  # range between 0-5Gy every 0.5 Gy
@@ -53,6 +56,13 @@ class TumorGrowthEnv(gym.Env):
 
     def reset(self):
         self.experiment.reset()
+        # reset experiment's parameters
+        self.experiment.run(0)
+        self.tumor_cells = self.experiment.get_results()
+        self.reward = - np.mean(self.tumor_cells)
+        self.time = 0
+        self.cumulative_dose = 0
+        return self.tumor_cells
 
     def render(self, mode='console'):
         if mode != 'console':
