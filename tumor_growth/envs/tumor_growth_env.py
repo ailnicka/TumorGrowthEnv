@@ -37,7 +37,7 @@ class TumorGrowthEnv(gym.Env):
         self.time = 0
         self.cumulative_dose = 0
         # gym spaces
-        self.observation_space = spaces.MultiDiscrete([1000000]*parallel_runs)  # lots of cells allowed per tumor?
+        self.observation_space = spaces.MultiDiscrete([1000000]*len(tumors_list))  # lots of cells allowed per tumor?
         self.action_space = spaces.Dict({"delay": spaces.Discrete(12),  # irradiation possible on full hours
                                          "dose": spaces.Discrete(11)})  # range between 0-5Gy every 0.5 Gy
 
