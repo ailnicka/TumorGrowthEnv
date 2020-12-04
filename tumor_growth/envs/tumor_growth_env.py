@@ -1,8 +1,8 @@
-import os
 import emt6ro.simulation as sim
 import numpy as np
 import gym
 from gym import spaces
+from os import path
 
 
 class TumorGrowthEnv(gym.Env):
@@ -19,9 +19,10 @@ class TumorGrowthEnv(gym.Env):
                  tumors_list=None,
                  parallel_runs: int = 10):
         if params_filename is None:
-            params_filename = "TumorGrowthEnv/tumor_growth/envs/data/default-parameters.json"
+            params_filename = path.join(path.dirname(path.realpath(__file__)), "/data/default-parameters.json")
         if tumors_list is None:
-            tumors_list = ["TumorGrowthEnv/tumor_growth/envs/data/tumor-lib/tumor-{}.txt".format(i) for i in range(1, 11)]
+            tumors_list = [path.join(path.dirname(path.realpath(__file__)), "/data/tumor-lib/tumor-{}.txt".format(i))
+                           for i in range(1, 11)]
         params = sim.load_parameters(params_filename)
         tumors = [sim.load_state(tumors, params) for tumors in tumors_list]
         self.experiment = sim.Experiment(params,
@@ -34,13 +35,13 @@ class TumorGrowthEnv(gym.Env):
         self.time = 0
         self.cumulative_dose = 0
         self.observation_space = spaces.MultiDiscrete([1000000]*parallel_runs)  # lots of cells allowed per tumor?
-        self.action_space = spaces.Dict({"delay": spaces.Discrete(12),
-                                         "dose": spaces.Box(low=0, high=5, shape=(), dtype=np.float32)})
+        self.action_space = spaces.Dict({"delay": spaces.Discrete(12),  # irradiation possible on full hours
+                                         "dose": spaces.Discrete(11)})  # range between 0-5Gy every 0.5 Gy
 
     def step(self, action=None):
         if action is not None:
-            translated_action = [(self.time + action.get("delay")*600, action.get("dose"))]
-            self.cumulative_dose = action.get("dose")
+            translated_action = [(self.time + action.get("delay")*600, 0.5 * action.get("dose"))]
+            self.cumulative_dose += 0.5 * action.get("dose")
             self.experiment.add_irradiations([translated_action])  # add irradiation
         self.experiment.run(12 * 600)  # evolve tumors for 12 hours
         self.time += 12 * 600
