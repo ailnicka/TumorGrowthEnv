@@ -62,7 +62,7 @@ class TumorGrowthEnv(gym.Env):
         self.reward = - np.mean(self.tumor_cells)
         self.time = 0
         self.cumulative_dose = 0
-        return self.tumor_cells
+        return np.array(self.tumor_cells)
 
     def render(self, mode='console'):
         if mode != 'console':
