@@ -20,6 +20,7 @@ class TumorGrowthEnv(gym.Env):
                  parallel_runs: int = 10):
         if params_filename is None:
             params_filename = path.join(path.dirname(path.realpath(__file__)), "/data/default-parameters.json")
+            print(params_filename)
         if tumors_list is None:
             tumors_list = [path.join(path.dirname(path.realpath(__file__)), "/data/tumor-lib/tumor-{}.txt".format(i))
                            for i in range(1, 11)]
