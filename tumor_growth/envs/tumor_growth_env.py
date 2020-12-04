@@ -18,12 +18,8 @@ class TumorGrowthEnv(gym.Env):
     def __init__(self, params_filename: str = None,
                  tumors_list=None,
                  parallel_runs: int = 10):
-        print(__file__)
-        print(os.path.abspath(__file__))
-        print(os.path.dirname(os.path.abspath(__file__)))
         if params_filename is None:
             params_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/default-parameters.json")
-            print(params_filename)
         if tumors_list is None:
             tumors_list = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/tumor-lib/tumor-{}.txt".format(i))
                            for i in range(1, 11)]
