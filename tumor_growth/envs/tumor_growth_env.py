@@ -38,12 +38,14 @@ class TumorGrowthEnv(gym.Env):
         self.cumulative_dose = 0
         # gym spaces
         self.observation_space = spaces.MultiDiscrete([1000000]*len(tumors_list))  # lots of cells allowed per tumor?
+        print("shape obs space", np.shape((np.array([1000000]*len(tumors_list)))))
         self.action_space = spaces.Dict({"delay": spaces.Discrete(12),  # irradiation possible on full hours
                                          "dose": spaces.Discrete(11)})  # range between 0-5Gy every 0.5 Gy
 
     def step(self, action=None):
         if action is not None:
             translated_action = [(self.time + action.get("delay")*600, 0.5 * action.get("dose"))]
+            print("tr action", translated_action)
             self.cumulative_dose += 0.5 * action.get("dose")
             self.experiment.add_irradiations([translated_action])  # add irradiation
         self.experiment.run(12 * 600)  # evolve tumors for 12 hours
@@ -62,6 +64,8 @@ class TumorGrowthEnv(gym.Env):
         self.reward = - np.mean(self.tumor_cells)
         self.time = 0
         self.cumulative_dose = 0
+        print("Shape tumor_cells", np.shape(self.tumor_cells))
+        print("Shape np array tumor_cells", np.shape(np.array(self.tumor_cells)))
         return np.array(self.tumor_cells)
 
     def render(self, mode='console'):
