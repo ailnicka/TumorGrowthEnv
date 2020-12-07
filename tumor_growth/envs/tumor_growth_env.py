@@ -43,10 +43,10 @@ class TumorGrowthEnv(gym.Env):
 
     def step(self, action):
         print(action)
-        translated_action = [self.time + action.get("delay")*600, 0.5 * action.get("dose")]
+        translated_action = (self.time + action.get("delay")*600, 0.5 * action.get("dose"))
         print("tr action", translated_action)
         self.cumulative_dose += 0.5 * action.get("dose")
-        self.experiment.add_irradiations([translated_action])  # add irradiation
+        self.experiment.add_irradiations([[translated_action]])  # add irradiation
         self.experiment.run(12 * 600)  # evolve tumors for 12 hours
         self.time += 12 * 600
         self.tumor_cells = self.experiment.get_results()
