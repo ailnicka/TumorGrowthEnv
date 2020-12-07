@@ -54,7 +54,7 @@ class TumorGrowthEnv(gym.Env):
         self.reward = - np.mean(self.tumor_cells)
         done = (self.reward == 0)
         info = {"cumulative_dose": self.cumulative_dose}
-        return self.tumor_cells, self.reward, done, info
+        return (np.array(self.tumor_cells)).flatten(), self.reward, done, info
 
     def reset(self):
         self.experiment.reset()
@@ -67,7 +67,7 @@ class TumorGrowthEnv(gym.Env):
         print(self.tumor_cells)
         print("Shape tumor_cells", np.shape(self.tumor_cells))
         print("Shape np array tumor_cells", np.shape(np.array(self.tumor_cells)))
-        return np.array(self.tumor_cells)
+        return (np.array(self.tumor_cells)).flatten()
 
     def render(self, mode='console'):
         if mode != 'console':
