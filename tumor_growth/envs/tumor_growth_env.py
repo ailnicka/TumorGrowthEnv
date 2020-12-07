@@ -64,6 +64,7 @@ class TumorGrowthEnv(gym.Env):
         self.reward = - np.mean(self.tumor_cells)
         self.time = 0
         self.cumulative_dose = 0
+        print(self.tumor_cells)
         print("Shape tumor_cells", np.shape(self.tumor_cells))
         print("Shape np array tumor_cells", np.shape(np.array(self.tumor_cells)))
         return np.array(self.tumor_cells)
