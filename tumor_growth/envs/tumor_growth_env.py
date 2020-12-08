@@ -41,14 +41,12 @@ class TumorGrowthEnv(gym.Env):
         self.cumulative_dose = 0
         # gym spaces
         self.observation_space = spaces.MultiDiscrete([10000]*len(tumors_list)*parallel_runs)  # lots of cells allowed per tumor?
-        self.action_space = spaces.Tuple((spaces.Discrete(12),  # irradiation possible on full hours
-                                         spaces.Discrete(11)))  # range between 0-5Gy every 0.5 Gy
+        self.action_space = spaces.MultiDiscrete([12,  # irradiation possible on full hours
+                                                 11])  # range between 0-5Gy every 0.5 Gy
 
     def step(self, action):
-        print(action)
         (delay, dose) = action
         translated_action = (self.time + delay*600, 0.5 * dose)
-        print("tr action", translated_action)
         self.cumulative_dose += 0.5 * dose
         self.experiment.add_irradiations([[translated_action]])  # add irradiation
         self.experiment.run(12 * 600)  # evolve tumors for 12 hours
@@ -67,14 +65,13 @@ class TumorGrowthEnv(gym.Env):
         self.reward = - np.mean(self.tumor_cells)
         self.time = 0
         self.cumulative_dose = 0
-        print(self.tumor_cells)
-        return (np.array(self.tumor_cells)).flatten()
+        return np.array(self.tumor_cells).flatten()
 
     def render(self, mode='console'):
         if mode != 'console':
             raise NotImplementedError()
-        print("For {} tumors, there are {} cancer cells left in each.".format(
-            len(self.tumor_cells), self.tumor_cells))
+        print("For {} tumors in {} simulation runs, there are {} cancer cells left in each.".format(
+            len(self.tumor_cells), len(self.tumor_cells[0]), self.tumor_cells))
         print("Average number of leftover cancer cells per tumor is: {}".format(-self.reward))
         print("Radiation dose applied so far: {}".format(self.cumulative_dose))
 
