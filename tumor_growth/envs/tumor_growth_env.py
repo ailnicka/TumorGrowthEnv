@@ -16,13 +16,16 @@ class TumorGrowthEnv(gym.Env):
     metadata = {'render.modes': ['console']}
 
     def __init__(self, params_filename: str = None,
-                 tumors_list=None,
+                 # tumors_list=None,  # when we want to model many tumor types on the same time
+                 tumor_id: int = 1,
                  parallel_runs: int = 1):
         if params_filename is None:
             params_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/default-parameters.json")
-        if tumors_list is None:
-            tumors_list = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/tumor-lib/tumor-{}.txt".format(i))
-                           for i in range(1, 11)]
+        # if tumors_list is None:
+        #     tumors_list = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/tumor-lib/tumor-{}.txt".format(i))
+        #                    for i in range(1, 11)]
+        tumors_list = [os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    "data/tumor-lib/tumor-{}.txt".format(tumor_id))]
         params = sim.load_parameters(params_filename)
         tumors = [sim.load_state(tumors, params) for tumors in tumors_list]
         self.experiment = sim.Experiment(params,
@@ -32,12 +35,12 @@ class TumorGrowthEnv(gym.Env):
         # trick to get starting situation..
         self.experiment.run(0)
         # values at the beginning
-        self.tumor_cells = self.experiment.get_results()
+        self.tumor_cells = self.experiment.get_results()[0]  # since we always have 1 protocol at the time, we can drop one list encapsulation
         self.reward = - np.mean(self.tumor_cells)
         self.time = 0
         self.cumulative_dose = 0
         # gym spaces
-        self.observation_space = spaces.MultiDiscrete([1000000]*len(tumors_list)*parallel_runs)  # lots of cells allowed per tumor?
+        self.observation_space = spaces.MultiDiscrete([10000]*len(tumors_list)*parallel_runs)  # lots of cells allowed per tumor?
         self.action_space = spaces.Tuple((spaces.Discrete(12),  # irradiation possible on full hours
                                          spaces.Discrete(11)))  # range between 0-5Gy every 0.5 Gy
 
@@ -50,7 +53,7 @@ class TumorGrowthEnv(gym.Env):
         self.experiment.add_irradiations([[translated_action]])  # add irradiation
         self.experiment.run(12 * 600)  # evolve tumors for 12 hours
         self.time += 12 * 600
-        self.tumor_cells = self.experiment.get_results()
+        self.tumor_cells = self.experiment.get_results()[0]
         self.reward = - np.mean(self.tumor_cells)
         done = bool(self.reward == 0)
         info = {"cumulative_dose": self.cumulative_dose}
@@ -60,7 +63,7 @@ class TumorGrowthEnv(gym.Env):
         self.experiment.reset()
         # reset experiment's parameters
         self.experiment.run(0)
-        self.tumor_cells = self.experiment.get_results()
+        self.tumor_cells = self.experiment.get_results()[0]
         self.reward = - np.mean(self.tumor_cells)
         self.time = 0
         self.cumulative_dose = 0
