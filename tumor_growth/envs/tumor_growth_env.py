@@ -54,7 +54,8 @@ class TumorGrowthEnv(gym.Env):
         self.time += 12 * 600
         self.tumor_cells = self.experiment.get_results()[0]
         self.reward = - np.mean(self.tumor_cells)
-        done = bool(self.reward == 0)
+        # finish when no leftover cancer cells or time over ten days or dose over 10 Gy
+        done = bool(self.reward == 0 or self.time >= 10 * 24 * 600 or self.cumulative_dose >=10)
         info = {"cumulative_dose": self.cumulative_dose}
         return np.array(self.tumor_cells).flatten(), self.reward, done, info
 
