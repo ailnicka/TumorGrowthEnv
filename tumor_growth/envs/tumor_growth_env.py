@@ -51,7 +51,7 @@ class TumorGrowthEnv(gym.Env):
         self.cumulative_dose += 0.5 * dose
         # added to limit cumulative dose to 10 Gy
         if self.cumulative_dose > 10:
-            translated_action[1] -= (self.cumulative_dose - 10)
+            translated_action[1] = translated_action[1] - (self.cumulative_dose - 10)
             self.cumulative_dose = 10
         self.experiment.add_irradiations([[translated_action]])  # add irradiation
         self.experiment.run(12 * 600)  # evolve tumors for 12 hours
