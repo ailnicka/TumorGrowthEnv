@@ -49,13 +49,17 @@ class TumorGrowthEnv(gym.Env):
         (delay, dose) = action
         translated_action = (self.time + delay*600, 0.5 * dose)
         self.cumulative_dose += 0.5 * dose
+        # added to limit cumulative dose to 10 Gy
+        if self.cumulative_dose > 10:
+            translated_action[1] -= (self.cumulative_dose - 10)
+            self.cumulative_dose = 10
         self.experiment.add_irradiations([[translated_action]])  # add irradiation
         self.experiment.run(12 * 600)  # evolve tumors for 12 hours
         self.time += 12 * 600
         self.tumor_cells = self.experiment.get_results()[0]
         self.reward = - np.mean(self.tumor_cells)
         # finish when no leftover cancer cells or time over ten days or dose over 10 Gy
-        done = bool(self.reward == 0 or self.time >= 10 * 24 * 600 or self.cumulative_dose >=10)
+        done = bool(self.reward == 0 or self.time >= 10 * 24 * 600 or self.cumulative_dose >= 10)
         info = {"cumulative_dose": self.cumulative_dose}
         return np.array(self.tumor_cells).flatten(), self.reward, done, info
 
