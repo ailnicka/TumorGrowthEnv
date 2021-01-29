@@ -18,7 +18,7 @@ class TumorGrowthEnv(gym.Env):
     def __init__(self, params_filename: str = None,
                  tumors_list = None,  # when we want to model many tumor types on the same time
                  # tumor_id: int = 1, # when we want just one tumor
-                 parallel_runs: int = 1):
+                 parallel_runs: int = 40):
         if params_filename is None:
             params_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/default-parameters.json")
         if tumors_list is None:
