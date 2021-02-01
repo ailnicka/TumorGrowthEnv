@@ -4,6 +4,8 @@ import gym
 from gym import spaces
 import os
 
+# the timestep of the radiotherapy
+CYCLE_IN_HOURS = 24
 
 class TumorGrowthEnv(gym.Env):
     """
@@ -18,7 +20,7 @@ class TumorGrowthEnv(gym.Env):
     def __init__(self, params_filename: str = None,
                  tumors_list = None,  # when we want to model many tumor types on the same time
                  # tumor_id: int = 1, # when we want just one tumor
-                 parallel_runs: int = 40):
+                 parallel_runs: int = 1):
         if params_filename is None:
             params_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/default-parameters.json")
         if tumors_list is None:
@@ -41,8 +43,8 @@ class TumorGrowthEnv(gym.Env):
         self.time = 0
         self.cumulative_dose = 0
         # gym spaces
-        self.observation_space = spaces.MultiDiscrete([10000]*len(tumors_list)*parallel_runs)  # lots of cells allowed per tumor?
-        self.action_space = spaces.MultiDiscrete([12,  # irradiation possible on full hours
+        self.observation_space = spaces.MultiDiscrete([1500]*len(tumors_list)*parallel_runs)  # lots of cells allowed per tumor: taken from GA paper
+        self.action_space = spaces.MultiDiscrete([CYCLE_IN_HOURS,  # irradiation possible on full hours
                                                  11])  # range between 0-5Gy every 0.5 Gy
 
     def step(self, action):
@@ -54,8 +56,8 @@ class TumorGrowthEnv(gym.Env):
             self.cumulative_dose = 10
         translated_action = (self.time + delay*600, 0.5 * dose)
         self.experiment.add_irradiations([[translated_action]])  # add irradiation
-        self.experiment.run(12 * 600)  # evolve tumors for 12 hours
-        self.time += 12 * 600
+        self.experiment.run(CYCLE_IN_HOURS * 600)  # evolve tumors for cycle of hours
+        self.time += CYCLE_IN_HOURS * 600
         self.tumor_cells = self.experiment.get_results()[0]
         self.reward = - np.mean(self.tumor_cells)
         # finish when no leftover cancer cells or time over ten days or dose over 10 Gy
