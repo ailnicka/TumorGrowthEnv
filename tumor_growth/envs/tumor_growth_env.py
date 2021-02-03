@@ -6,6 +6,8 @@ import os
 
 # the timestep of the radiotherapy
 CYCLE_IN_HOURS = 24
+# promotion for the final amount of tumor cells
+PROMOTION = 100
 
 class TumorGrowthEnv(gym.Env):
     """
@@ -39,7 +41,7 @@ class TumorGrowthEnv(gym.Env):
         self.experiment.run(0)
         # values at the beginning
         self.tumor_cells = self.experiment.get_results()[0]  # since we always have 1 protocol at the time, we can drop one list encapsulation
-        self.reward = - np.mean(self.tumor_cells)
+        self.start_reward = - np.mean(self.tumor_cells)
         self.time = 0
         self.cumulative_dose = 0
         # gym spaces
@@ -59,9 +61,16 @@ class TumorGrowthEnv(gym.Env):
         self.experiment.run(CYCLE_IN_HOURS * 600)  # evolve tumors for cycle of hours
         self.time += CYCLE_IN_HOURS * 600
         self.tumor_cells = self.experiment.get_results()[0]
-        self.reward = - np.mean(self.tumor_cells)
-        # finish when no leftover cancer cells or time over ten days or dose over 10 Gy
-        done = bool(self.reward == 0 or self.time >= 10 * 24 * 600 or self.cumulative_dose >= 10)
+        # reward is relatively smaller on intermediate steps, but big for the final result
+        self.reward = self.start_reward - np.mean(self.tumor_cells)
+        # finish when no leftover cancer cells or time over five days or dose over 10 Gy
+        done = bool(self.time >= 5 * 24 * 600 or self.cumulative_dose >= 10)
+        # if the dose or time exceeded, simulate up to 10 days and promote reward as the final one
+        if done:
+            leftover_time = 10 * 24 * 600 - self.time
+            self.experiment.run(leftover_time)
+            self.tumor_cells = self.experiment.get_results()[0]
+            self.reward = PROMOTION * (self.start_reward - np.mean(self.tumor_cells))
         info = {"cumulative_dose": self.cumulative_dose}
         return np.array(self.tumor_cells).flatten(), self.reward, done, info
 
