@@ -71,7 +71,7 @@ class TumorGrowthEnv(gym.Env):
             self.experiment.run(leftover_time)
             self.tumor_cells = self.experiment.get_results()[0]
             self.reward = PROMOTION * (self.start_reward - np.mean(self.tumor_cells))
-        info = {"cumulative_dose": self.cumulative_dose}
+        info = {"cumulative_dose": self.cumulative_dose, "leftover_cells": np.mean(self.tumor_cells), "fitness_func": 1500 - np.mean(self.tumor_cells)}
         return np.array(self.tumor_cells).flatten(), self.reward, done, info
 
     def reset(self):
@@ -89,7 +89,7 @@ class TumorGrowthEnv(gym.Env):
             raise NotImplementedError()
         print("For {} tumors in {} simulation runs, there are {} cancer cells left in each.".format(
             len(self.tumor_cells), len(self.tumor_cells[0]), self.tumor_cells))
-        print("Average number of leftover cancer cells per tumor is: {}".format(-self.reward))
+        print("Average number of leftover cancer cells per tumor is: {}".format(np.mean(self.tumor_cells)))
         print("Radiation dose applied so far: {}".format(self.cumulative_dose))
 
     def close(self):
