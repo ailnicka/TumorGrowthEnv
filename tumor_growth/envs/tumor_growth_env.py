@@ -42,6 +42,7 @@ class TumorGrowthEnv(gym.Env):
         # values at the beginning
         self.tumor_cells = self.experiment.get_results()[0]  # since we always have 1 protocol at the time, we can drop one list encapsulation
         self.start_reward = - np.mean(self.tumor_cells)
+        self.reward = 0
         self.time = 0
         self.cumulative_dose = 0
         # gym spaces
