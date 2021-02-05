@@ -4,11 +4,6 @@ import gym
 from gym import spaces
 import os
 
-# the timestep of the radiotherapy
-CYCLE_IN_HOURS = 24
-# promotion for the final amount of tumor cells
-PROMOTION = 100
-
 class TumorGrowthEnv(gym.Env):
     """
     Custom Environment that follows gym interface.
@@ -22,7 +17,9 @@ class TumorGrowthEnv(gym.Env):
     def __init__(self, params_filename: str = None,
                  tumors_list = None,  # when we want to model many tumor types on the same time
                  # tumor_id: int = 1, # when we want just one tumor
-                 parallel_runs: int = 1):
+                 parallel_runs: int = 1, # how many parallel runs per tumor - might be different as simulation is stochastic
+                 promotion: int = 100, # how many more important is reward after 10 days of simulation
+                 cycle_in_hours: int = 24): # timestep of radiotherapy
         if params_filename is None:
             params_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/default-parameters.json")
         if tumors_list is None:
@@ -46,8 +43,9 @@ class TumorGrowthEnv(gym.Env):
         self.time = 0
         self.cumulative_dose = 0
         # gym spaces
+        self.cycle_in_hours = cycle_in_hours
         self.observation_space = spaces.MultiDiscrete([1500]*len(tumors_list)*parallel_runs)  # lots of cells allowed per tumor: taken from GA paper
-        self.action_space = spaces.MultiDiscrete([CYCLE_IN_HOURS,  # irradiation possible on full hours
+        self.action_space = spaces.MultiDiscrete([self.cycle_in_hours,  # irradiation possible on full hours
                                                  11])  # range between 0-5Gy every 0.5 Gy
 
     def step(self, action):
@@ -59,12 +57,12 @@ class TumorGrowthEnv(gym.Env):
             self.cumulative_dose = 10
         translated_action = (self.time + delay*600, 0.5 * dose)
         self.experiment.add_irradiations([[translated_action]])  # add irradiation
-        self.experiment.run(CYCLE_IN_HOURS * 600)  # evolve tumors for cycle of hours
-        self.time += CYCLE_IN_HOURS * 600
+        self.experiment.run(self.cycle_in_hours * 600)  # evolve tumors for cycle of hours
+        self.time += self.cycle_in_hours * 600
         self.tumor_cells = self.experiment.get_results()[0]
         # reward is relatively smaller on intermediate steps, but big for the final result
         self.reward = self.start_reward - np.mean(self.tumor_cells)
-        # finish when no leftover cancer cells or time over five days or dose over 10 Gy
+        # finish when time over 5 days or dose over 10 Gy
         done = bool(self.time >= 5 * 24 * 600 or self.cumulative_dose >= 10)
         # if the dose or time exceeded, simulate up to 10 days and promote reward as the final one
         if done:
