@@ -44,6 +44,7 @@ class TumorGrowthEnv(gym.Env):
         self.cumulative_dose = 0
         # gym spaces
         self.cycle_in_hours = cycle_in_hours
+        self.promotion = promotion
         self.observation_space = spaces.MultiDiscrete([1500]*len(tumors_list)*parallel_runs)  # lots of cells allowed per tumor: taken from GA paper
         self.action_space = spaces.MultiDiscrete([self.cycle_in_hours,  # irradiation possible on full hours
                                                  11])  # range between 0-5Gy every 0.5 Gy
@@ -69,7 +70,7 @@ class TumorGrowthEnv(gym.Env):
             leftover_time = 10 * 24 * 600 - self.time
             self.experiment.run(leftover_time)
             self.tumor_cells = self.experiment.get_results()[0]
-            self.reward = PROMOTION * (self.start_reward - np.mean(self.tumor_cells))
+            self.reward = self.promotion * (self.start_reward - np.mean(self.tumor_cells))
         info = {"cumulative_dose": self.cumulative_dose, "leftover_cells": np.mean(self.tumor_cells), "fitness_func": 1500 - np.mean(self.tumor_cells)}
         return np.array(self.tumor_cells).flatten(), self.reward, done, info
 
