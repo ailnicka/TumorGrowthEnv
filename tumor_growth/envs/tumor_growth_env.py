@@ -79,7 +79,8 @@ class TumorGrowthEnv(gym.Env):
         # reset experiment's parameters
         self.experiment.run(0)
         self.tumor_cells = self.experiment.get_results()[0]
-        self.reward = - np.mean(self.tumor_cells)
+        self.start_reward = - np.mean(self.tumor_cells)
+        self.reward = 0
         self.time = 0
         self.cumulative_dose = 0
         return np.array(self.tumor_cells).flatten()
