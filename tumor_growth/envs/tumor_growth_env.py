@@ -17,14 +17,17 @@ class TumorGrowthEnv(gym.Env):
     def __init__(self, params_filename: str = None,
                  tumors_list = None,  # when we want to model many tumor types on the same time
                  # tumor_id: int = 1, # when we want just one tumor
-                 parallel_runs: int = 1, # how many parallel runs per tumor - might be different as simulation is stochastic
-                 promotion: int = 100, # how many more important is reward after 10 days of simulation
-                 cycle_in_hours: int = 24): # timestep of radiotherapy
+                 parallel_runs: int = 1,  # how many parallel runs per tumor - might be different as simulation is stochastic
+                 promotion: int = 100,  # how many more important is reward after 10 days of simulation
+                 cycle_in_hours: int = 24):  # timestep of radiotherapy
         if params_filename is None:
             params_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/default-parameters.json")
         if tumors_list is None:
             tumors_list = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/tumor-lib/tumor-{}.txt".format(i))
                            for i in range(1, 11)]
+        else:
+            tumors_list = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/tumor-lib/tumor-{}.txt".format(i))
+                           for i in tumors_list]
         # with tumor_id version
         # tumors_list = [os.path.join(os.path.dirname(os.path.abspath(__file__)),
         #                             "data/tumor-lib/tumor-{}.txt".format(tumor_id))]
@@ -32,7 +35,7 @@ class TumorGrowthEnv(gym.Env):
         tumors = [sim.load_state(tumors, params) for tumors in tumors_list]
         self.experiment = sim.Experiment(params,
                                     tumors,
-                                    parallel_runs,  # num_tests
+                                    parallel_runs,  # number of runs per tumor
                                     1) # num protocols
         # trick to get starting situation..
         self.experiment.run(0)
