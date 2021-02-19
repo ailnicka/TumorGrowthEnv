@@ -18,6 +18,7 @@ class TumorGrowthEnv(gym.Env):
                  tumors_list = None,  # when we want to model many tumor types on the same time
                  # tumor_id: int = 1, # when we want just one tumor
                  parallel_runs: int = 1,  # how many parallel runs per tumor - might be different as simulation is stochastic
+                 reward_scheme = None, # None as now, 'binary' for single tumor just binary reward: 1 if cured, 0 if not
                  promotion: int = 100,  # how many more important is reward after 10 days of simulation
                  cycle_in_hours: int = 24):  # timestep of radiotherapy
         if params_filename is None:
@@ -41,6 +42,9 @@ class TumorGrowthEnv(gym.Env):
         self.experiment.run(0)
         # values at the beginning
         self.tumor_cells = self.experiment.get_results()[0]  # since we always have 1 protocol at the time, we can drop one list encapsulation
+        if not ((reward_scheme is None) or (reward_scheme == 'binary')):
+            raise ValueError("Reward scheme can be None or binary!!")
+        self.reward_scheme = reward_scheme
         self.start_reward = - np.mean(self.tumor_cells)
         self.reward = 0
         self.time = 0
@@ -65,7 +69,10 @@ class TumorGrowthEnv(gym.Env):
         self.time += self.cycle_in_hours * 600
         self.tumor_cells = self.experiment.get_results()[0]
         # reward is relatively smaller on intermediate steps, but big for the final result
-        self.reward = self.start_reward - np.mean(self.tumor_cells)
+        if self.reward_scheme is None:
+            self.reward = self.start_reward - np.mean(self.tumor_cells)
+        elif self.reward_scheme == 'binary':
+            self.reward = 0
         # finish when time over 5 days or dose over 10 Gy
         done = bool(self.time >= 5 * 24 * 600 or self.cumulative_dose >= 10)
         # if the dose or time exceeded, simulate up to 10 days and promote reward as the final one
@@ -73,7 +80,11 @@ class TumorGrowthEnv(gym.Env):
             leftover_time = 10 * 24 * 600 - self.time
             self.experiment.run(leftover_time)
             self.tumor_cells = self.experiment.get_results()[0]
-            self.reward = self.promotion * (self.start_reward - np.mean(self.tumor_cells))
+            if self.reward_scheme is None:
+                self.reward = self.promotion * (self.start_reward - np.mean(self.tumor_cells))
+            elif self.reward_scheme == 'binary':
+                self.reward = 1 if np.mean(self.tumor_cells) == 0 else 0
+
         info = {"cumulative_dose": self.cumulative_dose, "leftover_cells": np.mean(self.tumor_cells), "fitness_func": 1500 - np.mean(self.tumor_cells)}
         return np.array(self.tumor_cells).flatten(), self.reward, done, info
 
