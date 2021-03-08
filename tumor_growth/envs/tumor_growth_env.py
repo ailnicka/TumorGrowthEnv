@@ -127,6 +127,7 @@ class TumorGrowthEnv(gym.Env):
             self.cumulative_dose += 0.5 * dose
             translated_action = (self.time + delay * 600, 0.5 * dose)
             self.experiment.add_irradiations([[translated_action]])  # add irradiation
+            self.experiment.run(24 * 600)
             self.tumor_cells = self.experiment.get_results()[0]
             # reward for less cancer cells, but discounted by the applied dose of radiotherapy
             self.reward = self.start_reward - np.mean(self.tumor_cells) - 10*self.cumulative_dose
