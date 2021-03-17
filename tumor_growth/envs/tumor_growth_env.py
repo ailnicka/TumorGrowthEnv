@@ -66,13 +66,14 @@ class TumorGrowthEnv(gym.Env):
 
     def step(self, action):
         (delay, dose) = action
+        dose = 0.5 * dose
         if self.mode is None:
-            self.cumulative_dose += 0.5 * dose
+            self.cumulative_dose += dose
             # added to limit cumulative dose to 10 Gy
             if self.cumulative_dose > 10:
                 dose -= (self.cumulative_dose - 10)
                 self.cumulative_dose = 10
-            translated_action = (self.time + delay*600, 0.5 * dose)
+            translated_action = (self.time + delay*600, dose)
             self.experiment.add_irradiations([[translated_action]])  # add irradiation
             self.experiment.run(self.cycle_in_hours * 600)  # evolve tumors for cycle of hours
             self.time += self.cycle_in_hours * 600
@@ -101,7 +102,7 @@ class TumorGrowthEnv(gym.Env):
                 dose -= (self.weekly_dose - 10)
                 self.weekly_dose = 10
             self.cumulative_dose += dose
-            translated_action = (self.time + delay * 600, 0.5 * dose)
+            translated_action = (self.time + delay * 600, dose)
             self.experiment.add_irradiations([[translated_action]])  # add irradiation
             self.time += 24 * 600  # add time to check if it's not weekend
             if self.time == 5*24*600 or self.time == 12*24*600: # no radiation over weekend
@@ -124,8 +125,8 @@ class TumorGrowthEnv(gym.Env):
                 self.reward = self.promotion * self.reward
 
         elif self.mode == 'no_radiation_limit':
-            self.cumulative_dose += 0.5 * dose
-            translated_action = (self.time + delay * 600, 0.5 * dose)
+            self.cumulative_dose += dose
+            translated_action = (self.time + delay * 600, dose)
             self.experiment.add_irradiations([[translated_action]])  # add irradiation
             self.experiment.run(24 * 600)
             self.tumor_cells = self.experiment.get_results()[0]
