@@ -130,8 +130,11 @@ class TumorGrowthEnv(gym.Env):
             self.experiment.run(24 * 600)
             self.tumor_cells = self.experiment.get_results()[0]
             # reward for less cancer cells, but discounted by the applied dose of radiotherapy
-            self.reward = self.start_reward - np.mean(self.tumor_cells) - 10*self.cumulative_dose
             done = bool(self.tumor_cells.all() == 0)
+            if done:
+                self.reward = self.promotion * (self.start_reward - np.mean(self.tumor_cells) - self.cumulative_dose)
+            else:
+                self.reward = self.start_reward - np.mean(self.tumor_cells) - self.cumulative_dose
 
         info = {"delay [h]": delay , "dose [Gy]": dose*0.5, "cumulative_dose": self.cumulative_dose, "leftover_cells": np.mean(self.tumor_cells),
                     "fitness_func": 1500 - np.mean(self.tumor_cells)}
