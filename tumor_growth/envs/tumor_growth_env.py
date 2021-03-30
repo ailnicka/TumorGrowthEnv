@@ -137,7 +137,7 @@ class TumorGrowthEnv(gym.Env):
             else:
                 self.reward = self.start_reward - np.mean(self.tumor_cells) - self.cumulative_dose
 
-        info = {"delay [h]": delay , "dose [Gy]": dose*0.5, "cumulative_dose": self.cumulative_dose, "leftover_cells": np.mean(self.tumor_cells),
+        info = {"delay [h]": delay , "dose [Gy]": dose, "cumulative_dose": self.cumulative_dose, "leftover_cells": np.mean(self.tumor_cells),
                     "fitness_func": 1500 - np.mean(self.tumor_cells)}
         return np.array(self.tumor_cells).flatten(), self.reward, done, info
 
