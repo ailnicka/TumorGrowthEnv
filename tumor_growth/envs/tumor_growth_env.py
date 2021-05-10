@@ -55,7 +55,7 @@ class TumorGrowthEnv(gym.Env):
             self.weekly_dose = 0
         self.cycle_in_hours = cycle_in_hours
         # reward definition
-        self.start_reward = - np.mean(self.tumor_cells)
+        self.start_reward = np.mean(self.tumor_cells)
         self.reward = 0
         self.reward_scheme = reward_scheme
         self.promotion = promotion
