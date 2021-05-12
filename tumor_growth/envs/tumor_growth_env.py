@@ -23,6 +23,8 @@ class TumorGrowthEnv(gym.Env):
                  reward_scheme = None,  # None as now, 'binary' for single tumor just binary reward: 1 if cured, 0 if not
                  promotion: int = 100,  # how many more important is reward after 10 days of simulation
                  cycle_in_hours: int = 24):  # timestep of radiotherapy
+
+        super(TumorGrowthEnv, self).__init__()
         if params_filename is None:
             params_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/default-parameters.json")
         if tumors_list is None:
@@ -55,7 +57,7 @@ class TumorGrowthEnv(gym.Env):
             self.weekly_dose = 0
         self.cycle_in_hours = cycle_in_hours
         # reward definition
-        self.start_reward = np.mean(self.tumor_cells)
+        self.start_reward = 0 # np.mean(self.tumor_cells)
         self.reward = 0
         self.reward_scheme = reward_scheme
         self.promotion = promotion
