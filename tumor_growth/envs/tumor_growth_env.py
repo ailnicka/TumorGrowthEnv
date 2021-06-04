@@ -86,7 +86,7 @@ class TumorGrowthEnv(gym.Env):
             done, info = self._step_no_rad_limit(action)
         if self.with_time:
             day = self.time / 24 / 600  # translate time into dayx
-            state = np.array(list(np.array(self.tumor_cells).flatten())+[self.day])
+            state = np.array(list(np.array(self.tumor_cells).flatten())+[day])
         else:
             state = np.array(self.tumor_cells).flatten()
         return state, self.reward, done, info
@@ -104,7 +104,6 @@ class TumorGrowthEnv(gym.Env):
         if self.mode == '3weeks':
             self.weekly_dose = 0
         if self.with_time:
-            day = int(self.time / 24 / 600)  # translate time into days
             state = np.array(list(np.array(self.tumor_cells).flatten())+[0])
         else:
             state = np.array(self.tumor_cells).flatten()
