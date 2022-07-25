@@ -10,7 +10,6 @@ class TumorGrowthEnv(gym.Env):
     This is a env where the growth of the tumor is simulated and it is possible to irradiate it.
     Multiple tumors can be simulated simultaneously, since the simulation is stochastic.
     Possible action is to add irradiation daily: the delay on the day and the dose are needed.
-    Reward is minus the average of leftover cancer cells.
     """
     metadata = {'render.modes': ['console']}
 
@@ -64,9 +63,9 @@ class TumorGrowthEnv(gym.Env):
         # gym spaces
         if with_time:
             maxday = 10 if self.mode != '3weeks' else 28
-            self.observation_space = spaces.MultiDiscrete([1500]*len(tumors_list)*parallel_runs+[maxday])  # lots of cells allowed per tumor: taken from GA paper
+            self.observation_space = spaces.MultiDiscrete([1500]+[maxday])  # lots of cells allowed per tumor: taken from GA paper
         else:
-            self.observation_space = spaces.MultiDiscrete([1500]*len(tumors_list)*parallel_runs)  # lots of cells allowed per tumor: taken from GA paper
+            self.observation_space = spaces.MultiDiscrete([1500])  # lots of cells allowed per tumor: taken from GA paper
         if self.mode == '2doses':
             self.action_space = spaces.MultiDiscrete([self.cycle_in_hours, self.cycle_in_hours, # irradiation possible on full hours twice a day
                                                       11,  # range between 0-5Gy every 0.5 Gy for daily dose
@@ -86,9 +85,9 @@ class TumorGrowthEnv(gym.Env):
             done, info = self._step_no_rad_limit(action)
         if self.with_time:
             day = self.time / 24 / 600  # translate time into dayx
-            state = np.array(list(np.array(self.tumor_cells).flatten())+[day])
+            state = np.array([int(np.mean(self.tumor_cells))]+[day])
         else:
-            state = np.array(self.tumor_cells).flatten()
+            state = np.array([int(np.mean(self.tumor_cells))])
         return state, self.reward, done, info
 
 
@@ -104,9 +103,9 @@ class TumorGrowthEnv(gym.Env):
         if self.mode == '3weeks':
             self.weekly_dose = 0
         if self.with_time:
-            state = np.array(list(np.array(self.tumor_cells).flatten())+[0])
+            state = np.array([int(np.mean(self.tumor_cells))]+[0])
         else:
-            state = np.array(self.tumor_cells).flatten()
+            state = np.array([int(np.mean(self.tumor_cells))])
         return state
 
     def render(self, mode='console'):
@@ -138,7 +137,7 @@ class TumorGrowthEnv(gym.Env):
         self.time += self.cycle_in_hours * 600
         self.tumor_cells = self.experiment.get_results()[0]
         # finish when time over 5 days or dose over 10 Gy
-        done = bool(self.time >= 5 * 24 * 600 or self.cumulative_dose >= 10)
+        done = bool(self.time >= 5 * 24 * 600 or self.cumulative_dose >= 10 or self.tumor_cells.all() == 0)
         # if the dose or time exceeded, simulate up to 10 days and promote reward as the final one
         if done:
             leftover_time = 10 * 24 * 600 - self.time
@@ -166,7 +165,7 @@ class TumorGrowthEnv(gym.Env):
         self.time += self.cycle_in_hours * 600
         self.tumor_cells = self.experiment.get_results()[0]
         # finish when time over 5 days or dose over 10 Gy
-        done = bool(self.time >= 5 * 24 * 600 or self.cumulative_dose >= 10)
+        done = bool(self.time >= 5 * 24 * 600 or self.cumulative_dose >= 10 or self.tumor_cells.all() == 0)
         # if the dose or time exceeded, simulate up to 10 days and promote reward as the final one
         if done:
             leftover_time = 10 * 24 * 600 - self.time
@@ -203,7 +202,7 @@ class TumorGrowthEnv(gym.Env):
             self.experiment.run(24 * 600)  # normally run for one day
         self.tumor_cells = self.experiment.get_results()[0]
         # finish after 4 weeks of simulation
-        done = bool(self.time >= 28 * 24 * 600)
+        done = bool(self.time >= 28 * 24 * 600 or self.tumor_cells.all() == 0)
         # if the time exceeded, promote reward as the final one
         if done:
             self._update_reward(promotion=True)
