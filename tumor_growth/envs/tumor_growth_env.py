@@ -33,6 +33,7 @@ class TumorGrowthEnv(gym.Env):
             raise ValueError(f"Reward must be one of {REW}!!")
         self.mode = mode
         self.with_time = with_time
+        self.reward_type = reward_type
 
         if params_filename is None:
             params_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/default-parameters.json")
@@ -45,7 +46,7 @@ class TumorGrowthEnv(gym.Env):
         # with tumor_id version
         # tumors_list = [os.path.join(os.path.dirname(os.path.abspath(__file__)),
         #                             "data/tumor-lib/tumor-{}.txt".format(tumor_id))]
-        self.rewad_type = reward_type
+
         params = sim.load_parameters(params_filename)
         tumors = [sim.load_state(tumors, params) for tumors in tumors_list]
         self.experiment = sim.Experiment(params,
@@ -242,13 +243,13 @@ class TumorGrowthEnv(gym.Env):
         return done, info
 
     def _update_reward(self, promotion=False):
-        if self.rewad_type is None and self.mode != 'no_radiation_limit':
+        if self.reward_type is None and self.mode != 'no_radiation_limit':
             self.reward = self.start_cells - np.mean(self.tumor_cells) if promotion==False \
                 else self.promotion * (self.start_cells - np.mean(self.tumor_cells))
         elif self.reward_type == None and self.mode == 'no_radiation_limit':
-            self.reward = (self.type - np.mean(self.tumor_cells) - self.cumulative_dose) if promotion == False \
+            self.reward = (self.start_cells - np.mean(self.tumor_cells) - self.cumulative_dose) if promotion == False \
                 else self.promotion * (self.start_cells - np.mean(self.tumor_cells) - self.cumulative_dose)
-        elif self.rewad_type == 'kill_prob':
+        elif self.reward_type == 'kill_prob':
             self.reward = np.sum(self.tumor_cells.flatten() == 0) if promotion == False \
                 else self.promotion * np.sum(self.tumor_cells.flatten() == 0)
 
