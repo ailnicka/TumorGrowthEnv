@@ -26,8 +26,11 @@ class TumorGrowthEnv(gym.Env):
         super(TumorGrowthEnv, self).__init__()
 
         MODES = [None, '3weeks', 'no_radiation_limit', '2doses']
+        REW = [None, 'kill_prob']
         if not mode in MODES:
             raise ValueError(f"Mode must be one of {MODES}!!")
+        if not reward_type in REW:
+            raise ValueError(f"Reward must be one of {REW}!!")
         self.mode = mode
         self.with_time = with_time
 
@@ -242,7 +245,7 @@ class TumorGrowthEnv(gym.Env):
             self.reward = self.start_cells - np.mean(self.tumor_cells) if promotion==False \
                 else self.promotion * (self.start_cells - np.mean(self.tumor_cells))
         elif self.reward_type == None and self.mode == 'no_radiation_limit':
-            self.reward = (self.start_cells - np.mean(self.tumor_cells) - self.cumulative_dose) if promotion == False \
+            self.reward = (self.type - np.mean(self.tumor_cells) - self.cumulative_dose) if promotion == False \
                 else self.promotion * (self.start_cells - np.mean(self.tumor_cells) - self.cumulative_dose)
         elif self.rewad_type == 'kill_prob':
             self.reward = np.sum(self.tumor_cells.flatten() == 0) if promotion == False \
