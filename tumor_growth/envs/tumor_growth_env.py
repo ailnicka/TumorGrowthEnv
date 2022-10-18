@@ -119,6 +119,7 @@ class TumorGrowthEnv(gym.Env):
             len(self.tumor_cells), len(self.tumor_cells[0]), self.tumor_cells))
         print("Average number of leftover cancer cells per tumor is: {}".format(np.mean(self.tumor_cells)))
         print("Simmulations with all cancer cells killed : {}".format(np.sum(self.tumor_cells.flatten() == 0)))
+        print("Probability if killed cancer: {}".format(np.sum(self.tumor_cells.flatten() == 0)/len(self.tumor_cells.flatten())))
         print("Radiation dose applied so far: {}".format(self.cumulative_dose))
         print("The simulation was evolved for {} days.".format(int(self.time/24/600)))
 
@@ -155,7 +156,7 @@ class TumorGrowthEnv(gym.Env):
 
         info = {"delay1": delay1, "delay2": delay2, "dose1": dose1, "dose2": dose2,
                 "cumulative_dose": self.cumulative_dose, "leftover_cells": np.mean(self.tumor_cells),
-                "killed_cancer": np.sum(self.tumor_cells.flatten() == 0),
+                "killed_cancer_prob": np.sum(self.tumor_cells.flatten() == 0)/len(self.tumor_cells.flatten()),
                 "fitness_func": 1500 - np.mean(self.tumor_cells)}
         return done, info
 
@@ -182,7 +183,7 @@ class TumorGrowthEnv(gym.Env):
         else:
             self._update_reward()
         info = {"delay [h]": delay , "dose [Gy]": dose, "cumulative_dose": self.cumulative_dose,
-                "leftover_cells": np.mean(self.tumor_cells), "killed_cancer": np.sum(self.tumor_cells.flatten() == 0),
+                "leftover_cells": np.mean(self.tumor_cells), "killed_cancer_prob": np.sum(self.tumor_cells.flatten() == 0)/len(self.tumor_cells.flatten()),
                 "fitness_func": 1500 - np.mean(self.tumor_cells)}
         return done, info
 
@@ -215,7 +216,7 @@ class TumorGrowthEnv(gym.Env):
         else:
             self._update_reward()
         info = {"delay [h]": delay, "dose [Gy]": dose, "cumulative_dose": self.cumulative_dose,
-                "leftover_cells": np.mean(self.tumor_cells), "killed_cancer": np.sum(self.tumor_cells.flatten() == 0),
+                "leftover_cells": np.mean(self.tumor_cells), "killed_cancer_prob": np.sum(self.tumor_cells.flatten() == 0)/len(self.tumor_cells.flatten()),
                 "fitness_func": 1500 - np.mean(self.tumor_cells)}
         return done, info
 
@@ -236,7 +237,7 @@ class TumorGrowthEnv(gym.Env):
             self._update_reward()
 
         info = {"delay [h]": delay, "dose [Gy]": dose, "cumulative_dose": self.cumulative_dose,
-            "leftover_cells": np.mean(self.tumor_cells), "killed_cancer": np.sum(self.tumor_cells.flatten() == 0),
+            "leftover_cells": np.mean(self.tumor_cells), "killed_cancer_prob": np.sum(self.tumor_cells.flatten() == 0)/len(self.tumor_cells.flatten()),
             "fitness_func": 1500 - np.mean(self.tumor_cells)}
         return done, info
 
