@@ -14,14 +14,15 @@ class TumorGrowthEnv(gym.Env):
     metadata = {'render.modes': ['console']}
 
     def __init__(self,
-                 mode = None,  # can be different modes for the definition, ie. 'None', '3weeks', 'no_radiation_limit'
-                 params_filename: str = None,
-                 tumors_list = None,  # when we want to model many tumor types on the same time
-                 # tumor_id: int = 1, # when we want just one tumor
-                 parallel_runs: int = 1,  # how many parallel runs per tumor - might be different as simulation is stochastic
-                 promotion: int = 100,  # how many more important is reward after 10 days of simulation
-                 cycle_in_hours: int = 24,  # timestep of radiotherapy
-                 with_time: bool = False):  # add day into state
+                reward_type = None, # None is based on the avarage number of leftowver cells, 'kill_prob' is based on how many simulations have killed all tumor cells
+                mode = None,  # can be different modes for the definition, ie. 'None', '3weeks', 'no_radiation_limit'
+                params_filename: str = None,
+                tumors_list = None,  # when we want to model many tumor types on the same time
+                # tumor_id: int = 1, # when we want just one tumor
+                parallel_runs: int = 1,  # how many parallel runs per tumor - might be different as simulation is stochastic
+                promotion: int = 100,  # how many more important is reward after 10 days of simulation
+                cycle_in_hours: int = 24,  # timestep of radiotherapy
+                with_time: bool = False):  # add day into state
         super(TumorGrowthEnv, self).__init__()
 
         MODES = [None, '3weeks', 'no_radiation_limit', '2doses']
@@ -41,6 +42,7 @@ class TumorGrowthEnv(gym.Env):
         # with tumor_id version
         # tumors_list = [os.path.join(os.path.dirname(os.path.abspath(__file__)),
         #                             "data/tumor-lib/tumor-{}.txt".format(tumor_id))]
+        self.rewad_type = reward_type
         params = sim.load_parameters(params_filename)
         tumors = [sim.load_state(tumors, params) for tumors in tumors_list]
         self.experiment = sim.Experiment(params,
@@ -90,7 +92,6 @@ class TumorGrowthEnv(gym.Env):
             state = np.array([int(np.mean(self.tumor_cells))])
         return state, self.reward, done, info
 
-
     def reset(self):
         self.experiment.reset()
         # reset experiment's parameters
@@ -114,6 +115,7 @@ class TumorGrowthEnv(gym.Env):
         print("For {} tumors in {} simulation runs, there are {} cancer cells left in each.".format(
             len(self.tumor_cells), len(self.tumor_cells[0]), self.tumor_cells))
         print("Average number of leftover cancer cells per tumor is: {}".format(np.mean(self.tumor_cells)))
+        print("Simmulations with all cancer cells killed : {}".format(np.sum(self.tumor_cells.flatten() == 0)))
         print("Radiation dose applied so far: {}".format(self.cumulative_dose))
         print("The simulation was evolved for {} days.".format(int(self.time/24/600)))
 
@@ -150,6 +152,7 @@ class TumorGrowthEnv(gym.Env):
 
         info = {"delay1": delay1, "delay2": delay2, "dose1": dose1, "dose2": dose2,
                 "cumulative_dose": self.cumulative_dose, "leftover_cells": np.mean(self.tumor_cells),
+                "killed_cancer": np.sum(self.tumor_cells.flatten() == 0),
                 "fitness_func": 1500 - np.mean(self.tumor_cells)}
         return done, info
 
@@ -176,7 +179,7 @@ class TumorGrowthEnv(gym.Env):
         else:
             self._update_reward()
         info = {"delay [h]": delay , "dose [Gy]": dose, "cumulative_dose": self.cumulative_dose,
-                "leftover_cells": np.mean(self.tumor_cells),
+                "leftover_cells": np.mean(self.tumor_cells), "killed_cancer": np.sum(self.tumor_cells.flatten() == 0),
                 "fitness_func": 1500 - np.mean(self.tumor_cells)}
         return done, info
 
@@ -209,7 +212,7 @@ class TumorGrowthEnv(gym.Env):
         else:
             self._update_reward()
         info = {"delay [h]": delay, "dose [Gy]": dose, "cumulative_dose": self.cumulative_dose,
-                "leftover_cells": np.mean(self.tumor_cells),
+                "leftover_cells": np.mean(self.tumor_cells), "killed_cancer": np.sum(self.tumor_cells.flatten() == 0),
                 "fitness_func": 1500 - np.mean(self.tumor_cells)}
         return done, info
 
@@ -225,17 +228,23 @@ class TumorGrowthEnv(gym.Env):
         # reward for less cancer cells, but discounted by the applied dose of radiotherapy
         done = bool(self.tumor_cells.all() == 0)
         if done:
-            self.reward = self.promotion * (self.start_cells - np.mean(self.tumor_cells) - self.cumulative_dose)
+            self._update_reward(promotion=True)
         else:
-            self.reward = self.start_cells - np.mean(self.tumor_cells) - self.cumulative_dose
+            self._update_reward()
 
         info = {"delay [h]": delay, "dose [Gy]": dose, "cumulative_dose": self.cumulative_dose,
-            "leftover_cells": np.mean(self.tumor_cells),
+            "leftover_cells": np.mean(self.tumor_cells), "killed_cancer": np.sum(self.tumor_cells.flatten() == 0),
             "fitness_func": 1500 - np.mean(self.tumor_cells)}
         return done, info
 
     def _update_reward(self, promotion=False):
-        self.reward = self.start_cells - np.mean(self.tumor_cells) if promotion==False \
-            else self.promotion * (self.start_cells - np.mean(self.tumor_cells))
-
+        if self.rewad_type is None and self.mode != 'no_radiation_limit':
+            self.reward = self.start_cells - np.mean(self.tumor_cells) if promotion==False \
+                else self.promotion * (self.start_cells - np.mean(self.tumor_cells))
+        elif self.reward_type == None and self.mode == 'no_radiation_limit':
+            self.reward = (self.start_cells - np.mean(self.tumor_cells) - self.cumulative_dose) if promotion == False \
+                else self.promotion * (self.start_cells - np.mean(self.tumor_cells) - self.cumulative_dose)
+        elif self.rewad_type == 'kill_prob':
+            self.reward = np.sum(self.tumor_cells.flatten() == 0) if promotion == False \
+                else self.promotion * np.sum(self.tumor_cells.flatten() == 0)
 
